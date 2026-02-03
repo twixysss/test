@@ -8,7 +8,11 @@ local GUI_REFRESH_BUTTON = "mmo_refresh_button"
 local GUI_NPC_LIST = "mmo_npc_list"
 local GUI_NPC_TAB = "mmo_npc_tab"
 local GUI_AUCTION_TAB = "mmo_auction_tab"
+local GUI_PROFILE_TAB = "mmo_profile_tab"
 local GUI_TABS = "mmo_tabs"
+local GUI_PROFILE_LIST = "mmo_profile_list"
+local GUI_AVATAR_SPRITE = "mmo_avatar_sprite"
+local GUI_PROFILE_NAME = "mmo_profile_name"
 
 local NPC_MERCHANTS = {
   {
@@ -45,7 +49,8 @@ end
 local function ensure_player_data(player)
   ensure_global()
   global.player_data[player.index] = global.player_data[player.index] or {
-    balance = 0
+    balance = 0,
+    avatar_sprite = "entity/character"
   }
   return global.player_data[player.index]
 end
@@ -93,6 +98,22 @@ local function add_items(player, name, count)
   end
   local inserted = inventory.insert({name = name, count = count})
   return inserted == count
+end
+
+local function resolve_avatar_sprite(name)
+  if not name or name == "" then
+    return nil
+  end
+  if game.item_prototypes[name] then
+    return "item/" .. name
+  end
+  if game.entity_prototypes[name] then
+    return "entity/" .. name
+  end
+  if game.virtual_signal_prototypes[name] then
+    return "virtual-signal/" .. name
+  end
+  return nil
 end
 
 local function format_auction(auction)
@@ -297,6 +318,22 @@ local function create_npc_tab(tab_pane)
   tab_pane.add_tab(tab, frame)
 end
 
+local function create_profile_tab(tab_pane)
+  local tab = tab_pane.add({type = "tab", caption = "Профиль", name = GUI_PROFILE_TAB})
+  local frame = tab_pane.add({type = "frame", name = "mmo_profile_frame", direction = "vertical"})
+  frame.style.padding = 8
+
+  local header = frame.add({type = "flow", direction = "horizontal"})
+  header.add({type = "sprite", name = GUI_AVATAR_SPRITE, sprite = "entity/character"})
+  header.add({type = "label", name = GUI_PROFILE_NAME, caption = "Игрок"})
+
+  frame.add({type = "line"})
+  frame.add({type = "label", caption = "Ваши лоты на аукционе:"})
+  frame.add({type = "scroll-pane", name = GUI_PROFILE_LIST, direction = "vertical"}).style.maximal_height = 300
+
+  tab_pane.add_tab(tab, frame)
+end
+
 local function update_balance_label(player)
   local root = player.gui.screen[GUI_ROOT]
   if not root then
@@ -380,10 +417,54 @@ local function populate_npc_list(player)
   end
 end
 
+local function populate_profile(player)
+  local root = player.gui.screen[GUI_ROOT]
+  if not root then
+    return
+  end
+  local tabs = root[GUI_TABS]
+  if not tabs then
+    return
+  end
+  local profile_frame = tabs["mmo_profile_frame"]
+  if not profile_frame then
+    return
+  end
+
+  local data = ensure_player_data(player)
+  local avatar = profile_frame[GUI_AVATAR_SPRITE]
+  if avatar then
+    avatar.sprite = data.avatar_sprite or "entity/character"
+  end
+  local name_label = profile_frame[GUI_PROFILE_NAME]
+  if name_label then
+    name_label.caption = string.format("Игрок: %s", player.name)
+  end
+
+  local list = profile_frame[GUI_PROFILE_LIST]
+  if not list then
+    return
+  end
+  list.clear()
+
+  local count = 0
+  for _, auction in pairs(global.auctions) do
+    if auction.seller_index == player.index then
+      count = count + 1
+      list.add({type = "label", caption = format_auction(auction)})
+    end
+  end
+
+  if count == 0 then
+    list.add({type = "label", caption = "У вас нет активных лотов."})
+  end
+end
+
 local function refresh_gui(player)
   update_balance_label(player)
   populate_auction_list(player)
   populate_npc_list(player)
+  populate_profile(player)
 end
 
 local function ensure_gui(player)
@@ -400,6 +481,7 @@ local function ensure_gui(player)
   local tab_pane = root.add({type = "tabbed-pane", name = GUI_TABS})
   create_auction_tab(tab_pane)
   create_npc_tab(tab_pane)
+  create_profile_tab(tab_pane)
 
   refresh_gui(player)
 end
@@ -535,6 +617,24 @@ commands.add_command("auction-gui", "Открыть окно аукциона", 
     return
   end
   ensure_gui(player)
+end)
+
+commands.add_command("auction-avatar", "Установить аватар: /auction-avatar <item|entity|signal>", function(event)
+  local player = get_player(event.player_index)
+  if not player then
+    return
+  end
+
+  local sprite = resolve_avatar_sprite(event.parameter)
+  if not sprite then
+    player.print("Не удалось распознать аватар. Укажите имя предмета, сущности или сигнала.")
+    return
+  end
+
+  local data = ensure_player_data(player)
+  data.avatar_sprite = sprite
+  refresh_gui_if_open(player)
+  player.print("Аватар обновлён.")
 end)
 
 script.on_init(function()
