@@ -138,7 +138,7 @@ local function populate_auction_list(player)
   list.clear()
 
   local count = 0
-  for _, auction in pairs(global.auctions) do
+  for _, auction in pairs(global.auctions or {}) do
     count = count + 1
     list.add({type = "label", caption = Auction.format_auction(auction)})
   end
@@ -231,7 +231,7 @@ local function populate_profile(player)
   list.clear()
 
   local count = 0
-  for _, auction in pairs(global.auctions) do
+  for _, auction in pairs(global.auctions or {}) do
     if auction.seller_index == player.index then
       count = count + 1
       list.add({type = "label", caption = Auction.format_auction(auction)})
@@ -244,6 +244,7 @@ local function populate_profile(player)
 end
 
 function Gui.refresh(player)
+  Auction.ensure_global()
   update_balance_label(player)
   populate_auction_list(player)
   populate_npc_list(player)

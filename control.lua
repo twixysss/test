@@ -256,10 +256,14 @@ end)
 
 script.on_nth_tick(60, function()
   Auction.ensure_global()
+  local expired = {}
   for auction_id, auction in pairs(global.auctions) do
     if auction.ends_at <= game.tick then
-      Auction.finish(auction_id)
+      table.insert(expired, auction_id)
     end
+  end
+  for _, auction_id in ipairs(expired) do
+    Auction.finish(auction_id)
   end
 end)
 

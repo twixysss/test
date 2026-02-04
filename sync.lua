@@ -33,16 +33,16 @@ local function apply_player_snapshot(player_name, snapshot)
     return
   end
   local data = Auction.ensure_player_data(player)
-  if snapshot.balance then
-    data.balance = snapshot.balance
+  if type(snapshot.balance) == "number" then
+    data.balance = math.floor(snapshot.balance)
   end
-  if snapshot.avatar_sprite then
+  if type(snapshot.avatar_sprite) == "string" and snapshot.avatar_sprite ~= "" then
     data.avatar_sprite = snapshot.avatar_sprite
   end
   if snapshot.guild ~= nil then
     data.guild = snapshot.guild
   end
-  if snapshot.friends then
+  if type(snapshot.friends) == "table" then
     data.friends = snapshot.friends
   end
 end
@@ -53,27 +53,33 @@ local function apply_auctions_snapshot(auctions)
   local next_id = 1
 
   for _, auction in ipairs(auctions) do
-    local seller_index = auction.seller_index
-    if not seller_index and auction.seller_name then
-      seller_index = resolve_player_index(auction.seller_name)
-    end
-    local record = {
-      id = auction.id or next_id,
-      seller_index = seller_index,
-      seller_name = auction.seller_name or "",
-      item_name = auction.item_name,
-      item_count = auction.item_count,
-      start_price = auction.start_price,
-      buyout_price = auction.buyout_price,
-      highest_bid = auction.highest_bid,
-      highest_bidder = auction.highest_bidder,
-      ends_at = auction.ends_at,
-      created_at = auction.created_at or game.tick
-    }
+    if type(auction) == "table" and auction.item_name and auction.item_count and auction.start_price then
+      local item_count = math.floor(auction.item_count)
+      local start_price = math.floor(auction.start_price)
+      if item_count > 0 and start_price > 0 then
+        local seller_index = auction.seller_index
+        if not seller_index and auction.seller_name then
+          seller_index = resolve_player_index(auction.seller_name)
+        end
+        local record = {
+          id = auction.id or next_id,
+          seller_index = seller_index,
+          seller_name = auction.seller_name or "",
+          item_name = auction.item_name,
+          item_count = item_count,
+          start_price = start_price,
+          buyout_price = auction.buyout_price,
+          highest_bid = auction.highest_bid,
+          highest_bidder = auction.highest_bidder,
+          ends_at = auction.ends_at or (game.tick + Auction.TICKS_PER_MINUTE),
+          created_at = auction.created_at or game.tick
+        }
 
-    global.auctions[record.id] = record
-    if record.id >= next_id then
-      next_id = record.id + 1
+        global.auctions[record.id] = record
+        if record.id >= next_id then
+          next_id = record.id + 1
+        end
+      end
     end
   end
 
