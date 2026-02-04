@@ -1,5 +1,6 @@
 local Auction = require("auction")
 local Gui = require("gui")
+local Sync = require("sync")
 
 local function parse_number(value)
   local num = tonumber(value)
@@ -233,6 +234,11 @@ end)
 
 script.on_init(function()
   Auction.ensure_global()
+  Sync.register()
+end)
+
+script.on_configuration_changed(function()
+  Sync.register()
 end)
 
 script.on_event(defines.events.on_player_created, function(event)

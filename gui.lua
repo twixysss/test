@@ -207,10 +207,14 @@ local function populate_profile(player)
   local friends_label = profile_frame[Gui.GUI_PROFILE_FRIENDS]
   if friends_label then
     local friend_names = {}
-    for _, friend_index in ipairs(data.friends) do
-      local friend = Auction.get_player(friend_index)
-      if friend then
-        table.insert(friend_names, friend.name)
+    for _, friend_ref in ipairs(data.friends) do
+      if type(friend_ref) == "number" then
+        local friend = Auction.get_player(friend_ref)
+        if friend then
+          table.insert(friend_names, friend.name)
+        end
+      elseif type(friend_ref) == "string" then
+        table.insert(friend_names, friend_ref)
       end
     end
     if #friend_names == 0 then
