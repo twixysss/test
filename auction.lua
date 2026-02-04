@@ -22,9 +22,21 @@ function Auction.ensure_player_data(player)
     balance = 0,
     avatar_sprite = "entity/character",
     friends = {},
-    guild = nil
+    guild = nil,
+    auth = {
+      status = "unauthenticated",
+      login = nil,
+      email = nil
+    }
   }
   return global.player_data[player.index]
+end
+
+function Auction.set_auth_status(player, status, login, email)
+  local data = Auction.ensure_player_data(player)
+  data.auth.status = status or data.auth.status
+  data.auth.login = login or data.auth.login
+  data.auth.email = email or data.auth.email
 end
 
 function Auction.get_balance(player)

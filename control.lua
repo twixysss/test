@@ -1,6 +1,7 @@
 local Auction = require("auction")
 local Gui = require("gui")
 local Sync = require("sync")
+local Auth = require("auth")
 
 local function parse_number(value)
   local num = tonumber(value)
@@ -232,13 +233,55 @@ commands.add_command("auction-guild-clear", "Сбросить гильдию", f
   player.print("Гильдия сброшена.")
 end)
 
+commands.add_command("auth-login", "Запрос авторизации: /auth-login <логин> <email>", function(event)
+  local player = Auction.get_player(event.player_index)
+  if not player then
+    return
+  end
+  local args = {}
+  for token in string.gmatch(event.parameter or "", "%S+") do
+    table.insert(args, token)
+  end
+  if #args < 2 then
+    player.print("Пример: /auth-login mylogin user@example.com")
+    return
+  end
+  remote.call("mmo_auction_auth", "request_login", player.name, args[1], args[2])
+end)
+
+commands.add_command("auth-register", "Запрос регистрации: /auth-register <логин> <email>", function(event)
+  local player = Auction.get_player(event.player_index)
+  if not player then
+    return
+  end
+  local args = {}
+  for token in string.gmatch(event.parameter or "", "%S+") do
+    table.insert(args, token)
+  end
+  if #args < 2 then
+    player.print("Пример: /auth-register mylogin user@example.com")
+    return
+  end
+  remote.call("mmo_auction_auth", "request_register", player.name, args[1], args[2])
+end)
+
+commands.add_command("auth-password", "Ввести пароль: /auth-password <пароль>", function(event)
+  local player = Auction.get_player(event.player_index)
+  if not player then
+    return
+  end
+  Auth.handle_password(player, event.parameter)
+end)
+
 script.on_init(function()
   Auction.ensure_global()
   Sync.register()
+  Auth.register()
 end)
 
 script.on_configuration_changed(function()
   Sync.register()
+  Auth.register()
 end)
 
 script.on_event(defines.events.on_player_created, function(event)

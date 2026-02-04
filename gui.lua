@@ -16,6 +16,7 @@ Gui.GUI_AVATAR_SPRITE = "mmo_avatar_sprite"
 Gui.GUI_PROFILE_NAME = "mmo_profile_name"
 Gui.GUI_PROFILE_FRIENDS = "mmo_profile_friends"
 Gui.GUI_PROFILE_GUILD = "mmo_profile_guild"
+Gui.GUI_PROFILE_AUTH = "mmo_profile_auth"
 
 local NPC_MERCHANTS = {
   {
@@ -86,6 +87,7 @@ local function create_profile_tab(tab_pane)
   header.add({type = "label", name = Gui.GUI_PROFILE_NAME, caption = "Игрок"})
 
   frame.add({type = "label", name = Gui.GUI_PROFILE_GUILD, caption = "Гильдия: Нет"})
+  frame.add({type = "label", name = Gui.GUI_PROFILE_AUTH, caption = "Аккаунт: не авторизован"})
   frame.add({type = "label", name = Gui.GUI_PROFILE_FRIENDS, caption = "Друзья: нет"})
   frame.add({type = "line"})
   frame.add({type = "label", caption = "Ваши лоты на аукционе:"})
@@ -203,6 +205,14 @@ local function populate_profile(player)
   local guild_label = profile_frame[Gui.GUI_PROFILE_GUILD]
   if guild_label then
     guild_label.caption = string.format("Гильдия: %s", data.guild or "Нет")
+  end
+  local auth_label = profile_frame[Gui.GUI_PROFILE_AUTH]
+  if auth_label then
+    if data.auth and data.auth.status == "authenticated" then
+      auth_label.caption = string.format("Аккаунт: %s (%s)", data.auth.login or "-", data.auth.email or "-")
+    else
+      auth_label.caption = "Аккаунт: не авторизован"
+    end
   end
   local friends_label = profile_frame[Gui.GUI_PROFILE_FRIENDS]
   if friends_label then

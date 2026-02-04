@@ -133,6 +133,17 @@ function Sync.register()
       end
       apply_player_snapshot(player_name, snapshot)
       return true
+    end,
+    submit_auth = function(player_name, action, login, email, password)
+      if not player_name or not action or not login or not email or not password then
+        return false
+      end
+      if type(password) ~= "string" or password == "" then
+        return false
+      end
+      -- Stub for future external server integration.
+      -- Replace this with an RCON/HTTP bridge in the server-side implementation.
+      return true
     end
   })
 end
