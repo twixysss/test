@@ -13,6 +13,8 @@ local GUI_TABS = "mmo_tabs"
 local GUI_PROFILE_LIST = "mmo_profile_list"
 local GUI_AVATAR_SPRITE = "mmo_avatar_sprite"
 local GUI_PROFILE_NAME = "mmo_profile_name"
+local GUI_PROFILE_FRIENDS = "mmo_profile_friends"
+local GUI_PROFILE_GUILD = "mmo_profile_guild"
 
 local NPC_MERCHANTS = {
   {
@@ -50,7 +52,9 @@ local function ensure_player_data(player)
   ensure_global()
   global.player_data[player.index] = global.player_data[player.index] or {
     balance = 0,
-    avatar_sprite = "entity/character"
+    avatar_sprite = "entity/character",
+    friends = {},
+    guild = nil
   }
   return global.player_data[player.index]
 end
@@ -327,6 +331,8 @@ local function create_profile_tab(tab_pane)
   header.add({type = "sprite", name = GUI_AVATAR_SPRITE, sprite = "entity/character"})
   header.add({type = "label", name = GUI_PROFILE_NAME, caption = "Игрок"})
 
+  frame.add({type = "label", name = GUI_PROFILE_GUILD, caption = "Гильдия: Нет"})
+  frame.add({type = "label", name = GUI_PROFILE_FRIENDS, caption = "Друзья: нет"})
   frame.add({type = "line"})
   frame.add({type = "label", caption = "Ваши лоты на аукционе:"})
   frame.add({type = "scroll-pane", name = GUI_PROFILE_LIST, direction = "vertical"}).style.maximal_height = 300
@@ -439,6 +445,25 @@ local function populate_profile(player)
   local name_label = profile_frame[GUI_PROFILE_NAME]
   if name_label then
     name_label.caption = string.format("Игрок: %s", player.name)
+  end
+  local guild_label = profile_frame[GUI_PROFILE_GUILD]
+  if guild_label then
+    guild_label.caption = string.format("Гильдия: %s", data.guild or "Нет")
+  end
+  local friends_label = profile_frame[GUI_PROFILE_FRIENDS]
+  if friends_label then
+    local friend_names = {}
+    for _, friend_index in ipairs(data.friends) do
+      local friend = get_player(friend_index)
+      if friend then
+        table.insert(friend_names, friend.name)
+      end
+    end
+    if #friend_names == 0 then
+      friends_label.caption = "Друзья: нет"
+    else
+      friends_label.caption = "Друзья: " .. table.concat(friend_names, ", ")
+    end
   end
 
   local list = profile_frame[GUI_PROFILE_LIST]
@@ -635,6 +660,91 @@ commands.add_command("auction-avatar", "Установить аватар: /auct
   data.avatar_sprite = sprite
   refresh_gui_if_open(player)
   player.print("Аватар обновлён.")
+end)
+
+commands.add_command("auction-friend-add", "Добавить друга: /auction-friend-add <player>", function(event)
+  local player = get_player(event.player_index)
+  if not player then
+    return
+  end
+  local target_name = event.parameter
+  if not target_name or target_name == "" then
+    player.print("Укажите имя игрока.")
+    return
+  end
+  local target = game.get_player(target_name)
+  if not target then
+    player.print("Игрок не найден.")
+    return
+  end
+  if target.index == player.index then
+    player.print("Нельзя добавить самого себя.")
+    return
+  end
+  local data = ensure_player_data(player)
+  for _, friend_index in ipairs(data.friends) do
+    if friend_index == target.index then
+      player.print("Этот игрок уже в друзьях.")
+      return
+    end
+  end
+  table.insert(data.friends, target.index)
+  refresh_gui_if_open(player)
+  player.print("Друг добавлен.")
+end)
+
+commands.add_command("auction-friend-remove", "Удалить друга: /auction-friend-remove <player>", function(event)
+  local player = get_player(event.player_index)
+  if not player then
+    return
+  end
+  local target_name = event.parameter
+  if not target_name or target_name == "" then
+    player.print("Укажите имя игрока.")
+    return
+  end
+  local target = game.get_player(target_name)
+  if not target then
+    player.print("Игрок не найден.")
+    return
+  end
+  local data = ensure_player_data(player)
+  for index, friend_index in ipairs(data.friends) do
+    if friend_index == target.index then
+      table.remove(data.friends, index)
+      refresh_gui_if_open(player)
+      player.print("Друг удалён.")
+      return
+    end
+  end
+  player.print("Игрок не найден в списке друзей.")
+end)
+
+commands.add_command("auction-guild-set", "Установить гильдию: /auction-guild-set <name>", function(event)
+  local player = get_player(event.player_index)
+  if not player then
+    return
+  end
+  local guild_name = event.parameter
+  if not guild_name or guild_name == "" then
+    player.print("Укажите название гильдии.")
+    return
+  end
+  local data = ensure_player_data(player)
+  data.guild = guild_name
+  refresh_gui_if_open(player)
+  player.print("Гильдия обновлена.")
+end)
+
+commands.add_command("auction-guild-clear", "Сбросить гильдию", function(event)
+  local player = get_player(event.player_index)
+  if not player then
+    return
+  end
+  local data = ensure_player_data(player)
+  data.guild = nil
+  refresh_gui_if_open(player)
+  player.print("Гильдия сброшена.")
 end)
 
 script.on_init(function()
