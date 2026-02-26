@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Industrial Mobile RP",
+    "description": "Industrial-style resource pack for Minecraft Bedrock 1.21 (Android)",
+    "uuid": "a683715f-d96d-48d3-b72b-9d31863dcf1b",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "description": "Industrial Mobile resources module",
+      "type": "resources",
+      "uuid": "3aa272fd-9dbb-4b34-bab2-d3f8b8e9f09f",
+      "version": [1, 0, 0]
+    }
+  ]
+}

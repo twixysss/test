@@ -1,0 +1,13 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:recipe_furnace": {
+    "description": {
+      "identifier": "industrial:tin_ingot_from_raw_tin"
+    },
+    "tags": [
+      "furnace"
+    ],
+    "input": "industrial:raw_tin",
+    "output": "industrial:tin_ingot"
+  }
+}
