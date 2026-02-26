@@ -1,0 +1,18 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "Industrial Mobile BP",
+    "description": "Industrial-style addon for Minecraft Bedrock 1.21 (Android)",
+    "uuid": "2fa8c0f0-d109-463e-8ac3-e2c6a2a09315",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 0]
+  },
+  "modules": [
+    {
+      "description": "Industrial Mobile behavior module",
+      "type": "data",
+      "uuid": "1b47512d-45b3-4b5d-b46e-4f1e91c8df29",
+      "version": [1, 0, 0]
+    }
+  ]
+}
